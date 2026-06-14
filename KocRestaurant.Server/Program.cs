@@ -91,7 +91,6 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
@@ -112,10 +111,6 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
 // Security Headers Middleware
 app.Use(async (context, next) =>
