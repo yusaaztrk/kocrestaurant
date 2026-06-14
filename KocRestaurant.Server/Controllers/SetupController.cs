@@ -28,31 +28,40 @@ namespace KocRestaurant.Server.Controllers
         [HttpPost("create-admin")]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            try
             {
-                return BadRequest(new { message = "Kullanıcı adı, e-posta ve şifre zorunludur." });
+                if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    return BadRequest(new { message = "Kullanıcı adı, e-posta ve şifre zorunludur." });
+                }
+
+                // Lock this endpoint if there is ALREADY any user in the database
+                var hasAnyUser = await _context.Users.AnyAsync();
+                if (hasAnyUser)
+                {
+                    return BadRequest(new { message = "Sistemde zaten kayıtlı yönetici hesabı bulunmaktadır. Bu işlem engellenmiştir." });
+                }
+
+                var adminUser = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Username = dto.Username.Trim(),
+                    Email = dto.Email.Trim().ToLower(),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, 12),
+                    Role = "Admin"
+                };
+
+                _context.Users.Add(adminUser);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Yönetici hesabı başarıyla oluşturuldu. Şimdi bu bilgilerle giriş yapabilirsiniz." });
             }
-
-            // Lock this endpoint if there is ALREADY any user in the database
-            var hasAnyUser = await _context.Users.AnyAsync();
-            if (hasAnyUser)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "Sistemde zaten kayıtlı yönetici hesabı bulunmaktadır. Bu işlem engellenmiştir." });
+                return StatusCode(500, new { 
+                    message = $"Veritabanı veya sunucu hatası: {ex.Message} {(ex.InnerException != null ? "-> " + ex.InnerException.Message : "")}" 
+                });
             }
-
-            var adminUser = new User
-            {
-                Id = Guid.NewGuid(),
-                Username = dto.Username.Trim(),
-                Email = dto.Email.Trim().ToLower(),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, 12),
-                Role = "Admin"
-            };
-
-            _context.Users.Add(adminUser);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Yönetici hesabı başarıyla oluşturuldu. Şimdi bu bilgilerle giriş yapabilirsiniz." });
         }
     }
 }
