@@ -123,7 +123,7 @@ app.Use(async (context, next) =>
 
 app.UseCors("CorsPolicy");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Handled by IIS to avoid infinite redirection loops
 
 app.UseRateLimiter(); // Apply Rate Limiter middleware
 
