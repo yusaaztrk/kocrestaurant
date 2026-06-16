@@ -91,7 +91,7 @@ export const PopularSection = React.forwardRef<HTMLDivElement, PopularSectionPro
               popularItems.map((item) => (
                 <div 
                   key={item.id} 
-                  className={`flex items-center justify-between group cursor-pointer ${!item.isAvailable ? 'opacity-60' : ''}`} 
+                  className="flex items-center justify-between group cursor-pointer"
                   onClick={() => navigate('/menu')}
                 >
                   <div className="flex items-center gap-6">
@@ -103,9 +103,6 @@ export const PopularSection = React.forwardRef<HTMLDivElement, PopularSectionPro
                     <div>
                       <h3 className="font-headline-md text-lg text-primary group-hover:text-secondary transition-colors font-medium animate-none">
                         {item.name}
-                        {!item.isAvailable && (
-                          <span className="ml-2 text-[10px] text-red-500 font-bold uppercase tracking-wider bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">TÜKENDİ</span>
-                        )}
                       </h3>
                       <p className="text-sm text-on-surface-variant mt-1.5">
                         {item.category?.name || 'Menü'} • {item.isDailySpecial ? 'Günün Menüsü' : 'Favori Seçim'}

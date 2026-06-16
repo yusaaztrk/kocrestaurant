@@ -38,11 +38,11 @@ export const SutlacSection: React.FC<SutlacSectionProps> = ({ imageUrl }) => {
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined notranslate text-secondary text-2xl" translate="no">bakery_dining</span>
                 <h3 className="font-headline-md text-lg text-primary uppercase tracking-wide">
-                  Ev Yapımı Baklava & Kadayıf
+                  Ev Yapımı Kadayıf
                 </h3>
               </div>
               <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-                İçerisinde halis tereyağı ve çıtır ceviz bulunan günlük kadayıf tatlısı yapıyoruz. Ayrıca evimizde, günlük el açması ev baklavası yaptırıyor, bu eşsiz lezzetleri ilk günkü tazeliğiyle müşterilerimizle buluşturuyoruz.
+                İçerisinde halis tereyağı ve çıtır ceviz bulunan günlük kadayıf tatlısı hazırlıyoruz. Hafif şerbeti, dengeli kıvamı ve ilk günkü tazeliğiyle bu geleneksel lezzeti misafirlerimizle buluşturuyoruz.
               </p>
             </div>
           </div>
@@ -56,7 +56,7 @@ export const SutlacSection: React.FC<SutlacSectionProps> = ({ imageUrl }) => {
             <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-surface-container-high transition-transform duration-500 group-hover:-translate-y-1">
               <img 
                 src={displayImage} 
-                alt="Koç Restaurant Meşhur Fırın Sütlaç ve Ev Yapımı Baklava Sunumu" 
+                alt="Koç Restaurant Meşhur Fırın Sütlaç ve Ev Yapımı Kadayıf Sunumu"
                 className="w-full h-[380px] object-cover transition-transform duration-700 group-hover:scale-103"
               />
               

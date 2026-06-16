@@ -17,11 +17,24 @@ export const ContactMessages: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error' | null; text: string }>({ type: null, text: '' });
 
+  const decodeHtmlEntities = (value: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    return textarea.value;
+  };
+
+  const normalizeMessage = (msg: ContactMessage): ContactMessage => ({
+    ...msg,
+    fullName: decodeHtmlEntities(msg.fullName),
+    subject: decodeHtmlEntities(msg.subject),
+    message: decodeHtmlEntities(msg.message)
+  });
+
   const loadMessages = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get('/contact');
-      setMessages(response.data);
+      setMessages(response.data.map(normalizeMessage));
     } catch (err) {
       console.error('Error loading messages', err);
     } finally {
@@ -34,15 +47,7 @@ export const ContactMessages: React.FC = () => {
   }, []);
 
   const handleOpenMessage = async (msg: ContactMessage) => {
-    // Unescape text from WebUtility encoding
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(msg.message, 'text/html');
-    const decodedMessage = doc.body.textContent || msg.message;
-    
-    setSelectedMessage({
-      ...msg,
-      message: decodedMessage
-    });
+    setSelectedMessage(normalizeMessage(msg));
 
     if (!msg.isRead) {
       try {

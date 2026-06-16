@@ -436,7 +436,7 @@ export const MenuItems: React.FC = () => {
                     onChange={(e) => setIsDailySpecial(e.target.checked)}
                     className="w-5 h-5 accent-secondary rounded border-outline-variant"
                   />
-                  <span className="font-label-md text-sm text-primary">Günün Menüsü (Şefin Seçimi)</span>
+                  <span className="font-label-md text-sm text-primary">Şefin Seçimi</span>
                 </label>
 
                 <label className="flex items-center gap-2.5 cursor-pointer select-none">

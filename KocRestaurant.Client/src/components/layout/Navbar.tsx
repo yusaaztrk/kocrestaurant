@@ -29,19 +29,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    const initializeGoogleTranslate = () => {
+      const translateEl = document.getElementById('google_translate_element');
+      if (!translateEl) return;
+
+      if ((window as any).google?.translate && translateEl.childElementCount === 0) {
+        new (window as any).google.translate.TranslateElement(
+          {
+            pageLanguage: 'tr',
+            includedLanguages: 'en,de,fr,ar,ru,it,es,az,ka,fa',
+            autoDisplay: false
+          },
+          'google_translate_element'
+        );
+      }
+    };
+
     const addGoogleTranslateScript = () => {
-      // Define global init function
       (window as any).googleTranslateElementInit = () => {
-        if (document.getElementById('google_translate_element')) {
-          new (window as any).google.translate.TranslateElement(
-            {
-              pageLanguage: 'tr',
-              includedLanguages: 'en,de,fr,ar,ru,it,es,az,ka,fa',
-              autoDisplay: false
-            },
-            'google_translate_element'
-          );
-        }
+        initializeGoogleTranslate();
       };
 
       if (!document.getElementById('google-translate-script')) {
@@ -52,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         document.body.appendChild(script);
       } else if ((window as any).google && (window as any).google.translate) {
         try {
-          (window as any).googleTranslateElementInit();
+          initializeGoogleTranslate();
         } catch (e) {
           console.warn('Re-initializing google translate failed', e);
         }
@@ -62,24 +68,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     const timer = setTimeout(addGoogleTranslateScript, 500);
     return () => clearTimeout(timer);
   }, []);
-
-  // Dynamically move the Google Translate element between desktop and mobile menu wrapper to avoid multiple instantiations
-  useEffect(() => {
-    const translateEl = document.getElementById('google_translate_element');
-    if (!translateEl) return;
-
-    if (isOpen) {
-      const mobileWrapper = document.getElementById('google_translate_mobile_wrapper');
-      if (mobileWrapper) {
-        mobileWrapper.appendChild(translateEl);
-      }
-    } else {
-      const desktopWrapper = document.getElementById('google_translate_desktop_wrapper');
-      if (desktopWrapper) {
-        desktopWrapper.appendChild(translateEl);
-      }
-    }
-  }, [isOpen]);
 
   const navItems = [
     { label: 'Ana Sayfa', value: 'home', path: '/' },
@@ -92,15 +80,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleNavigate = (path: string) => {
     navigate(path);
     setIsOpen(false);
-  };
-
-  const getWhatsappLink = () => {
-    if (!settings?.phone) return '#';
-    const cleanPhone = settings.phone.replace(/\D/g, '');
-    const waPhone = cleanPhone.startsWith('90') 
-      ? cleanPhone 
-      : (cleanPhone.startsWith('0') ? '90' + cleanPhone.slice(1) : '90' + cleanPhone);
-    return `https://wa.me/${waPhone}`;
   };
 
   const getPhoneCallLink = () => {
@@ -139,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Actions (Desktop: Translate Button, Mobile: Hamburger) */}
           <div className="flex items-center gap-4">
-            <div className="hidden md:block" id="google_translate_desktop_wrapper">
+            <div className="w-[128px] md:w-[180px] shrink-0 origin-right scale-[0.72] md:scale-100">
               <div id="google_translate_element" className="google-translate-container"></div>
             </div>
 
@@ -196,10 +175,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             ))}
           </div>
 
-          <div className="pt-2" id="google_translate_mobile_wrapper">
-            {/* Google Translate dropdown will be appended here dynamically when drawer is open */}
-          </div>
-
           {/* Footer Contact Details inside Mobile Menu */}
           {settings && (
             <div className="border-t border-white/10 pt-8 mt-8 space-y-6">
@@ -241,12 +216,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Floating Animated Contact Buttons */}
       {settings?.phone && (
         <>
-          {/* WhatsApp Floating Button (Bottom Left) */}
+          {false && (
           <a
-            href={getWhatsappLink()}
+            href="#"
             target="_blank"
             rel="noreferrer"
-            className="fixed bottom-6 left-6 z-50 bg-[#25D366] text-white p-3.5 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 group cursor-pointer animate-bounce"
+            className="hidden"
             style={{ animationDuration: '3s' }}
             title="WhatsApp ile İletişime Geçin"
           >
@@ -254,6 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
             </svg>
           </a>
+          )}
 
           {/* Phone Floating Button (Bottom Right) */}
           <a

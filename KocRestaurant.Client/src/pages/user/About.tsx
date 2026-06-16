@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../../hooks/useSEO';
@@ -55,13 +54,6 @@ export const About: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface">
-      <Navbar 
-        restaurantName={settings.restaurantName}
-        logoUrl={settings.logoUrl}
-        activePage="about"
-        settings={settings}
-      />
-
       {/* About Header Banner */}
       <section className="pt-32 pb-16 bg-surface-container-low w-full">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">

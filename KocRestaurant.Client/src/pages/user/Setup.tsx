@@ -49,7 +49,15 @@ export const Setup: React.FC = () => {
         navigate('/login');
       }, 3000);
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Hesap oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
+      console.error(err);
+      let message = 'Hesap oluşturulurken bir hata oluştu. ';
+      if (err.response) {
+        message += `(Sunucu Hatası: ${err.response.status} - ${err.response.data?.message || err.response.statusText || 'Detay yok'})`;
+      } else if (err.request) {
+        message += `(Sunucuya ulaşılamadı. CORS, ağ veya bağlantı hatası. İstek yapılan URL: ${axios.defaults.baseURL || ''}/setup/create-admin)`;
+      } else {
+        message += `(Hata: ${err.message})`;
+      }
       setError(message);
     } finally {
       setIsSubmitting(false);

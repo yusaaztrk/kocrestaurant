@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useSEO } from '../../hooks/useSEO';
 
 // Component Imports
-import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Hero, type HeroSlide } from '../../components/home/Hero';
 import { WhyUsSection } from '../../components/home/WhyUsSection';
@@ -182,13 +181,6 @@ export const Home: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar 
-        restaurantName={settings.restaurantName}
-        logoUrl={settings.logoUrl}
-        activePage="home"
-        settings={settings}
-      />
-
       {/* 1. Slider */}
       <Hero dailySpecial={dailySpecial} slides={slides} />
 

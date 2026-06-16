@@ -1,6 +1,8 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { AuthProvider } from './context/AuthContext';
+import { Navbar } from './components/layout/Navbar';
 
 // Public User Pages
 import { Home } from './pages/user/Home';
@@ -23,20 +25,74 @@ import { ContactMessages } from './pages/admin/ContactMessages';
 import { Settings } from './pages/admin/Settings';
 import { HeroSlidesManager } from './pages/admin/HeroSlidesManager';
 
+const defaultSettings = {
+  restaurantName: 'KOÇ RESTAURANT',
+  address: 'Etiler, Nispetiye Cad. No: 12, İstanbul',
+  phone: '+90 (212) 555 01 01',
+  email: 'rezervasyon@kocrestaurant.com',
+  workingHours: 'Her Gün: 12:00 - 00:00',
+  logoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD_9V67s22Q7fN00efDph6D7s5iT6MwtFwZjBLChNtBIxQ6vVLRd5DAGVXxhWThDlZ9iSGeAGwwBG67-In0G9tCX5-n_rNizLA_8GKLCWY_USrub3bEZh6r5-KC7VcfEIO-oGGRFlLhZ766sgmojIsdX9hzppjf7LhLvfPexccNjtaTn85c2dYsz8DPbtBCfPxbC7VNdYkh6nIbQAkFTdhiHgoGr30FBuCTO4LVF0hbdUT3I4t5_tSR4o9lW0pV1QGiZronkxxVrKMt',
+  facebookUrl: '#',
+  instagramUrl: '#'
+};
+
+const PublicLayout: React.FC = () => {
+  const location = useLocation();
+  const [settings, setSettings] = useState(defaultSettings);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await axios.get('/settings');
+        if (response.data) {
+          setSettings(response.data);
+        }
+      } catch (err) {
+        console.error('Error loading navbar settings', err);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  const activePage = useMemo(() => {
+    if (location.pathname === '/') return 'home';
+    if (location.pathname.startsWith('/menu')) return 'menu';
+    if (location.pathname.startsWith('/about')) return 'about';
+    if (location.pathname.startsWith('/gallery')) return 'gallery';
+    if (location.pathname.startsWith('/contact')) return 'contact';
+    return undefined;
+  }, [location.pathname]);
+
+  return (
+    <>
+      <Navbar
+        restaurantName={settings.restaurantName}
+        logoUrl={settings.logoUrl}
+        activePage={activePage}
+        settings={settings}
+      />
+      <Outlet />
+    </>
+  );
+};
+
 export const App: React.FC = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Public Customer Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/sutlac/:district" element={<DistrictSEO />} />
+          </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/first-setup-admin" element={<Setup />} />
-          <Route path="/sutlac/:district" element={<DistrictSEO />} />
 
           {/* Secure Admin Dashboard Routes */}
           <Route path="/mainkocrestaurant" element={<AdminLayout />}>

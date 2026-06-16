@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toSlug } from '../../utils/slugify';
-import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { useSEO } from '../../hooks/useSEO';
 
@@ -51,8 +50,11 @@ export const Menu: React.FC = () => {
   });
 
   // Dynamic Category SEO Meta Integration
-  const currentCategoryObj = categories.find(c => c.id === selectedCategory);
-  const categoryName = currentCategoryObj ? currentCategoryObj.name : 'Tüm Lezzetler';
+  const visibleCategories = useMemo(() => categories.filter(category =>
+    menuItems.some(item => item.categoryId === category.id)
+  ), [categories, menuItems]);
+  const currentCategoryObj = visibleCategories.find(c => c.id === selectedCategory);
+  const categoryName = currentCategoryObj ? currentCategoryObj.name : 'Günün Lezzetleri';
 
   useSEO({
     title: `${categoryName} Menüsü | ${settings.restaurantName}`,
@@ -69,8 +71,8 @@ export const Menu: React.FC = () => {
       return;
     }
 
-    if (categories.length > 0) {
-      const matchedCategory = categories.find(c => toSlug(c.name) === catParam);
+    if (categories.length > 0 && menuItems.length > 0) {
+      const matchedCategory = visibleCategories.find(c => toSlug(c.name) === catParam);
       if (matchedCategory) {
         setSelectedCategory(matchedCategory.id);
       } else {
@@ -81,7 +83,7 @@ export const Menu: React.FC = () => {
         setSearchParams(nextParams);
       }
     }
-  }, [searchParams, categories, setSearchParams]);
+  }, [searchParams, categories, menuItems, visibleCategories, setSearchParams]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -93,7 +95,7 @@ export const Menu: React.FC = () => {
         const catRes = await axios.get('/categories');
         setCategories(catRes.data);
 
-        const menuRes = await axios.get('/menu');
+        const menuRes = await axios.get('/menu/specials');
         setMenuItems(menuRes.data);
       } catch (err) {
         console.error('Error loading menu page data', err);
@@ -124,13 +126,6 @@ export const Menu: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface">
-      <Navbar 
-        restaurantName={settings.restaurantName}
-        logoUrl={settings.logoUrl}
-        activePage="menu"
-        settings={settings}
-      />
-
       {/* Menu Header banner */}
       <section className="pt-32 pb-16 bg-surface-container-low w-full">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
@@ -168,7 +163,7 @@ export const Menu: React.FC = () => {
             </button>
 
             {/* Dynamic Categories Boxes */}
-            {categories.map((category) => (
+            {visibleCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => handleCategorySelect(category.id)}
@@ -178,11 +173,11 @@ export const Menu: React.FC = () => {
                     : 'border-outline-variant/30 bg-surface-container-lowest hover:bg-surface-container-low hover:border-outline-variant/60'
                 }`}
               >
-                <div className="w-full aspect-square overflow-hidden bg-surface-container mb-2.5">
+                <div className="w-full h-28 sm:h-32 overflow-hidden bg-surface-container mb-2.5 flex items-center justify-center">
                   <img
                     src={category.imageUrl || "https://images.unsplash.com/photo-1544025162-d76694265947?w=300&auto=format&fit=crop"}
                     alt={category.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-2"
                   />
                 </div>
                 <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-center leading-tight px-2 w-full whitespace-normal break-words ${
@@ -205,7 +200,7 @@ export const Menu: React.FC = () => {
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-24">
             <span className="material-symbols-outlined notranslate text-5xl text-outline-variant" translate="no">restaurant_menu</span>
-            <p className="text-on-surface-variant mt-4 font-body-md">Bu kategoride henüz yemek eklenmemiş.</p>
+            <p className="text-on-surface-variant mt-4 font-body-md">Bugünün menüsünde bu kategori için aktif yemek bulunmuyor.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

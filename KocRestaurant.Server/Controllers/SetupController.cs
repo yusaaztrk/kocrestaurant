@@ -58,9 +58,7 @@ namespace KocRestaurant.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { 
-                    message = $"Veritabanı veya sunucu hatası: {ex.Message} {(ex.InnerException != null ? "-> " + ex.InnerException.Message : "")}" 
-                });
+                return StatusCode(500, new { message = $"Sunucu hatası: {ex.Message}", detail = ex.InnerException?.Message ?? "Detay yok" });
             }
         }
     }

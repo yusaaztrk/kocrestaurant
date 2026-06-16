@@ -36,7 +36,12 @@ builder.Services.AddCors(options =>
 
 // 3. Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secret = jwtSettings.GetValue<string>("Secret") ?? "SuperSecureSecretKeyKocRestaurant2026BrandNewSecretKeyLongEnoughForHMACSHA256";
+var secret = jwtSettings.GetValue<string>("Secret");
+if (string.IsNullOrWhiteSpace(secret) || secret.Length < 32)
+{
+    throw new InvalidOperationException("JwtSettings:Secret must be configured and at least 32 characters long.");
+}
+
 var issuer = jwtSettings.GetValue<string>("Issuer") ?? "KocRestaurant.Server";
 var audience = jwtSettings.GetValue<string>("Audience") ?? "KocRestaurant.Client";
 
@@ -94,6 +99,9 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+// CORS MUST be the very first middleware so preflight OPTIONS always get headers
+app.UseCors("CorsPolicy");
+
 // 5. Configure Static Directory for Image Uploads
 var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
 if (!Directory.Exists(uploadDir))
@@ -121,8 +129,6 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseCors("CorsPolicy");
-
 // app.UseHttpsRedirection(); // Handled by IIS to avoid infinite redirection loops
 
 app.UseRateLimiter(); // Apply Rate Limiter middleware
@@ -136,16 +142,60 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    // Step A: Ensure database and base tables exist
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        // Ensure Database is created and Seed data (configured in OnModelCreating) is applied
         await context.Database.EnsureCreatedAsync();
+        logger.LogInformation("Database EnsureCreated completed successfully.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while creating or seeding the PostgreSQL database.");
+        logger.LogError(ex, "EnsureCreatedAsync failed. The app will still start.");
+    }
+
+    // Step B: Patch missing tables/columns (isolated so app always starts)
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        await context.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Users"" (
+                ""Id"" uuid PRIMARY KEY,
+                ""Username"" varchar(50) NOT NULL,
+                ""Email"" varchar(100) NOT NULL DEFAULT '',
+                ""PasswordHash"" varchar(255) NOT NULL,
+                ""Role"" varchar(20) NOT NULL DEFAULT 'Admin',
+                ""RefreshToken"" varchar(255) NOT NULL DEFAULT '',
+                ""RefreshTokenExpiryTime"" timestamp with time zone NULL
+            );
+
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Email"" varchar(100) NOT NULL DEFAULT '';
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshToken"" varchar(255) NOT NULL DEFAULT '';
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""RefreshTokenExpiryTime"" timestamp with time zone NULL;
+
+            CREATE TABLE IF NOT EXISTS ""HeroSlides"" (
+                ""Id"" uuid PRIMARY KEY,
+                ""Title"" varchar(200) NOT NULL,
+                ""Description"" varchar(1000) NOT NULL,
+                ""ImageUrl"" varchar(1000) NOT NULL,
+                ""DisplayOrder"" integer NOT NULL DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS ""GalleryItems"" (
+                ""Id"" uuid PRIMARY KEY,
+                ""ImageUrl"" varchar(1000) NOT NULL,
+                ""Caption"" varchar(200) NOT NULL DEFAULT '',
+                ""Category"" varchar(50) NOT NULL DEFAULT 'General',
+                ""DisplayOrder"" integer NOT NULL DEFAULT 0
+            );
+        ");
+        logger.LogInformation("Database schema patch completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database schema patch failed. The app will still start.");
     }
 }
 

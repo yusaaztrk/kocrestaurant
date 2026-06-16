@@ -31,11 +31,12 @@ namespace KocRestaurant.Server.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Sanitization: Escape HTML tags to protect against XSS injection
-            message.FullName = System.Net.WebUtility.HtmlEncode(message.FullName.Trim());
+            // React renders these values as text, so keep Turkish characters intact
+            // and rely on normal text escaping in the UI instead of storing HTML entities.
+            message.FullName = message.FullName.Trim();
             message.Email = message.Email.Trim().ToLower();
-            message.Subject = System.Net.WebUtility.HtmlEncode(message.Subject.Trim());
-            message.Message = System.Net.WebUtility.HtmlEncode(message.Message.Trim());
+            message.Subject = message.Subject.Trim();
+            message.Message = message.Message.Trim();
             message.CreatedAt = DateTime.UtcNow;
             message.IsRead = false;
 
